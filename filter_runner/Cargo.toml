@@ -1,0 +1,12 @@
+[package]
+name = "filter_runner"
+version = "0.1.0"
+authors = ["Christer Sandberg <christer.sandberg@svt.se>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33.0"
+dlopen = "0.1"
+dlopen_derive = "0.1"
+libc = "0.2"
+png = "0.16.1"

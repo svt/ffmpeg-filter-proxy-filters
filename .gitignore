@@ -1,0 +1,5 @@
+deps/ffmpeg*
+*.so
+*.dylib
+.vscode
+.DS_Store

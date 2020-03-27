@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option java_package = "se.svt.si.app.subtitleconverter.core.format.srf";
+option java_outer_classname = "SubtitleRenderingData";
+
+message RenderingData {
+    uint32 width = 1;
+    uint32 height = 2;
+    repeated Transition transitions = 3;
+    repeated Path paths = 4;
+}
+
+message Transition {
+    uint64 time_in = 1;
+    uint64 time_out = 2;
+    repeated Shape shapes = 4;
+}
+
+message Shape {
+    sint32 x = 1;
+    sint32 y = 2;
+    uint32 argb = 3;
+    uint32 path_index = 4;
+    bool fill = 5;
+    uint32 line_width = 6;
+}
+
+message Path {
+    repeated Segment segments = 1;
+}
+
+message Segment {
+    SegmentType type = 1;
+    repeated Point points = 2;
+}
+
+enum SegmentType {
+    MOVE = 0;
+    LINE = 1;
+    QUAD = 2;
+    CUBIC = 3;
+    CLOSE = 4;
+}
+
+message Point {
+    sint32 x = 1;
+    sint32 y = 2;
+}

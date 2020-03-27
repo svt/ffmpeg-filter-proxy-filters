@@ -1,0 +1,24 @@
+[package]
+name = "tsvg_filter"
+version = "0.1.0"
+authors = ["Christer Sandberg <christer.sandberg@svt.se>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+flate2 = "1.0"
+lazy_static = "1.4.0"
+libc = "0.2"
+regex = "1"
+roxmltree = "0.9.0"
+simple-error = "0.2"
+
+[dependencies.resvg]
+version = "0.9.0"
+default-features = false
+features = ["cairo-backend"]
+
+[profile.release]
+panic = 'abort'

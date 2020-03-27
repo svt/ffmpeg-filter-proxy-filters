@@ -1,0 +1,22 @@
+[package]
+name = "srf_filter"
+version = "0.1.0"
+authors = ["Christer Sandberg <christer.sandberg@svt.se>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+protobuf = "2.12.0"
+regex = "1"
+simple-error = "0.2"
+
+[dependencies.cairo-rs]
+version = "0.8.1"
+features = ["png"]
+default-features = false
+
+[profile.release]
+panic = 'abort'

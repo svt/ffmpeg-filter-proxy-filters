@@ -31,7 +31,7 @@ dependency in `Cargo.toml`.
 
 ```console
 protoc \
-    --proto_path ../proto` \
+    --proto_path ../proto \
     --rust_out src \
     ../proto/subtitle_rendering_data.proto
 ```

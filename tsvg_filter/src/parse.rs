@@ -2,14 +2,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{error, fmt, io};
+use std::{error, fmt, io, string::String};
 
 use resvg::usvg;
 use roxmltree::{Document, Node, NodeType};
 
-use super::{BoxResult, Transition};
+use super::BoxResult;
+use crate::transition::{Transition, Tree};
 
-pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Vec<Transition>> {
+pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Tree> {
     let mut s = String::new();
     source.read_to_string(&mut s)?;
 
@@ -21,7 +22,7 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Vec<Transition
     }
 
     let mut transitions = Vec::new();
-    for c in root.children() {
+    for (i, c) in root.children().enumerate() {
         let node_type = c.node_type();
         match node_type {
             NodeType::Text => {
@@ -39,7 +40,7 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Vec<Transition
                     return parse_error(format!("unexpected element {}", name));
                 }
 
-                transitions.push(parse_transition(&c)?);
+                transitions.push(parse_transition(i, &c)?);
             }
 
             _ => {
@@ -48,23 +49,34 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Vec<Transition
         }
     }
 
-    Ok(transitions)
+    Ok(Tree::new(transitions))
 }
 
-fn parse_transition(node: &Node) -> BoxResult<Transition> {
-    let attr = |n: &str| -> super::BoxResult<u64> {
-        node.attribute(n)
-            .map(|v| v.parse())
-            .transpose()?
-            .ok_or(Box::new(ParseError(format!("no {} in transition", n))))
-    };
+fn parse_transition(idx: usize, node: &Node) -> BoxResult<Transition> {
+    let time_in = node
+        .attribute("time-in")
+        .map(|v| v.parse::<u64>())
+        .transpose()?
+        .ok_or(Box::new(ParseError(String::from(
+            "no time-in attribute in transition",
+        ))))?;
 
-    let time_in = attr("time-in")?;
-    let time_out = attr("time-out")?;
+    let time_out = node
+        .attribute("time-out")
+        .map(|v| v.parse::<u64>())
+        .transpose()?;
+
+    let index = node
+        .attribute("index")
+        .map(|v| v.parse::<usize>())
+        .transpose()?
+        .unwrap_or(idx);
+
     let tree = parse_svg(node)?;
     Ok(Transition {
         time_in,
         time_out,
+        index,
         tree,
     })
 }

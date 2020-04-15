@@ -16,6 +16,9 @@ use lazy_static::lazy_static;
 
 mod parse;
 
+mod transition;
+use transition::Tree;
+
 pub(crate) type BoxResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 lazy_static! {
@@ -41,13 +44,7 @@ struct Config<'a> {
     tsvg: &'a str,
 }
 
-pub(crate) struct Transition {
-    time_in: u64,
-    time_out: u64,
-    tree: usvg::Tree,
-}
-
-struct Context(Vec<Transition>);
+struct Context(Tree);
 
 #[no_mangle]
 pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void) -> c_int {
@@ -60,7 +57,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
         return 1;
     }
 
-    let transitions = match parse_config(config).and_then(|c| parse_tsvg(&c)) {
+    let tree = match parse_config(config).and_then(|c| parse_tsvg(&c)) {
         Ok(t) => t,
         Err(e) => {
             eprintln!("error parsing: {}", e);
@@ -68,7 +65,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
         }
     };
 
-    let ctx = Context(transitions);
+    let ctx = Context(tree);
     unsafe {
         *user_data = Box::into_raw(Box::new(ctx)) as *mut c_void;
     }
@@ -98,12 +95,10 @@ pub extern "C" fn filter_frame(
         Box::leak(ctx)
     };
 
-    let transition = match find_transition(&ctx.0, ts_millis) {
-        Some(idx) => &ctx.0[idx],
-        None => {
-            return 0;
-        }
-    };
+    let transitions = ctx.0.search(ts_millis);
+    if transitions.is_empty() {
+        return 0;
+    }
 
     let cr = match new_cairo_context(data, data_size as usize, width, height, line_size) {
         Ok(cr) => cr,
@@ -114,7 +109,9 @@ pub extern "C" fn filter_frame(
     };
 
     let size = resvg::ScreenSize::new(width as u32, height as u32).unwrap();
-    resvg::backend_cairo::render_to_canvas(&transition.tree, &RESVG_OPTIONS, size, &cr);
+    for transition in transitions {
+        resvg::backend_cairo::render_to_canvas(&transition.tree, &RESVG_OPTIONS, size, &cr);
+    }
 
     0
 }
@@ -152,29 +149,13 @@ fn parse_config<'a>(config: *const c_char) -> BoxResult<Config<'a>> {
     }
 }
 
-fn parse_tsvg(config: &Config) -> BoxResult<Vec<Transition>> {
+fn parse_tsvg(config: &Config) -> BoxResult<Tree> {
     let f = File::open(config.tsvg)?;
     if let Compression::Gzip = config.compression {
         parse::parse_tsvg(GzDecoder::new(f))
     } else {
         parse::parse_tsvg(f)
     }
-}
-
-fn find_transition(transitions: &[Transition], ts: f64) -> Option<usize> {
-    transitions
-        .binary_search_by(|t| {
-            let time_in = t.time_in as f64;
-            let time_out = t.time_out as f64;
-            if ts >= time_in && ts < time_out {
-                std::cmp::Ordering::Equal
-            } else if time_in < ts || time_out < ts {
-                std::cmp::Ordering::Less
-            } else {
-                std::cmp::Ordering::Greater
-            }
-        })
-        .ok()
 }
 
 fn new_cairo_context(

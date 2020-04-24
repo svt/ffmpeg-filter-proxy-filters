@@ -52,6 +52,22 @@ fn main() {
                 .default_value("0"),
         )
         .arg(
+            Arg::with_name("width")
+                .short("w")
+                .long("width")
+                .help("Sets the frame width")
+                .takes_value(true)
+                .default_value("1280"),
+        )
+        .arg(
+            Arg::with_name("height")
+                .short("h")
+                .long("height")
+                .help("Sets the frame height")
+                .takes_value(true)
+                .default_value("720"),
+        )
+        .arg(
             Arg::with_name("png_out")
                 .short("o")
                 .long("png_out")
@@ -61,6 +77,8 @@ fn main() {
         .get_matches();
 
     let ts = value_t_or_exit!(matches.value_of("timestamp"), c_double);
+    let width = value_t_or_exit!(matches.value_of("width"), c_int);
+    let height = value_t_or_exit!(matches.value_of("height"), c_int);
     let filter = matches.value_of("FILTER").unwrap();
     let config = matches.value_of("config").unwrap_or("");
     let png_out = matches.value_of("png_out").unwrap_or("");
@@ -78,18 +96,16 @@ fn main() {
         std::process::exit(rv);
     }
 
-    const WIDTH: c_int = 1280;
-    const HEIGHT: c_int = 720;
-    const LINE_SIZE: c_int = WIDTH * 4;
+    let line_size: c_int = width * 4;
 
-    let mut frame_data: Vec<u8> = vec![0xff; (HEIGHT * LINE_SIZE) as _];
+    let mut frame_data: Vec<u8> = vec![0x55; (height * line_size) as _];
     let rv = unsafe {
         container.filter_frame(
             frame_data.as_mut_ptr(),
             frame_data.len() as _,
-            WIDTH,
-            HEIGHT,
-            LINE_SIZE,
+            width,
+            height,
+            line_size,
             ts,
             user_data,
         )
@@ -105,7 +121,7 @@ fn main() {
 
         let file = File::create(png_out).unwrap();
         let ref mut w = BufWriter::new(file);
-        let mut encoder = png::Encoder::new(w, WIDTH as _, HEIGHT as _);
+        let mut encoder = png::Encoder::new(w, width as _, height as _);
         encoder.set_color(png::ColorType::RGBA);
         encoder.set_depth(png::BitDepth::Eight);
 

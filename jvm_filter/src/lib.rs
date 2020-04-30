@@ -164,8 +164,7 @@ pub extern "C" fn filter_frame(
         eprintln!("no user data");
         return 1;
     } else {
-        let ctx = unsafe { Box::from_raw(user_data as *mut Context) };
-        Box::leak(ctx)
+        unsafe { &*(user_data as *const Context) }
     };
 
     if !ctx.vm.is_ok() {

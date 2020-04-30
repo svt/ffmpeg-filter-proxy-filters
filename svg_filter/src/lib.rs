@@ -9,7 +9,6 @@ use std::ptr;
 
 use resvg::{cairo, usvg};
 
-
 lazy_static! {
     pub(crate) static ref RESVG_OPTIONS: resvg::Options = resvg::Options {
         usvg: usvg::Options {
@@ -77,8 +76,7 @@ pub extern "C" fn filter_frame(
         eprintln!("no user data");
         return 1;
     } else {
-        let t = unsafe { Box::from_raw(user_data as *mut usvg::Tree) };
-        Box::leak(t)
+        unsafe { &*(user_data as *const usvg::Tree) }
     };
 
     let size = resvg::ScreenSize::new(width as u32, height as u32).unwrap();
@@ -124,4 +122,3 @@ fn new_cairo_context(
     cr.set_antialias(cairo::Antialias::Best);
     Ok(cr)
 }
-

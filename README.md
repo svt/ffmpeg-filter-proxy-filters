@@ -23,6 +23,10 @@ To see how the data should be formatted:
 gzip -dc samples/sample.tsvg | less
 ```
 
+## [SVG filter](svg_filter)
+
+A filter used to overlay a single [SVG][4] file, e.g. a logo.
+ 
 ## [JVM filter](jvm_filter)
 
 A filter that embeds a Java Virtual Machine.
@@ -46,6 +50,13 @@ TSVG (on Mac):
 ```console
 (cd tsvg_filter; cargo build --release)
 (cd filter_runner; cargo run -- ../tsvg_filter/target/release/libtsvg_filter.dylib -c "tsvg=../samples/sample.tsvg" -o ../tsvg.png)
+```
+
+SVG (on Mac):
+
+```console
+(cd svg_filter; cargo build --release)
+(cd filter_runner; cargo run -- ../svg_filter/target/release/libsvg_filter.dylib -c "svg=../samples/sample.svg" -o ../svg.png)
 ```
 
 For more info about the available options:

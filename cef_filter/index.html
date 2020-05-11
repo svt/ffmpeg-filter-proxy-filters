@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#000000" />
+  </head>
+  <body>
+    <div id="root">
+      <div id="circle" style="margin-top: 200px; width: 400px; height: 100px;">
+        <svg viewBox="0 0 400 100">
+          <circle id="circle-node" cx="50" cy="50" r="40" fill="blue" />
+        </svg>
+      </div>
+    </div>
+    <script>
+      var circleNode = document.getElementById("circle-node");
+
+      var startTime = 0;
+      var totalTime = 4000;
+      var progress = 0;
+      function animateCircle(ts) {
+        if (progress >= 1) {
+          return;
+        }
+
+        if (!startTime) {
+          console.log("no start time");
+          startTime = ts;
+        }
+
+        console.log("ts:", ts);
+
+        progress = (ts - startTime) / totalTime;
+        console.log("progress:", progress);
+        circleNode.setAttributeNS(null, "cx", 50 + 200 * progress);
+      }
+    </script>
+  </body>
+</html>

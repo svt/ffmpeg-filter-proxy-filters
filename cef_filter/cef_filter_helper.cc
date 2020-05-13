@@ -7,10 +7,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <include/cef_app.h>
-
 #include "app.h"
 #include "loader.h"
+#include "render_process_handler.h"
 
 int main(int argc, char* argv[]) {
   const char* cef_root = std::getenv("CEF_ROOT");
@@ -26,6 +25,9 @@ int main(int argc, char* argv[]) {
   }
 
   CefMainArgs main_args(argc, argv);
-  CefRefPtr<cef_filter::App> app(new cef_filter::App);
+  CefRefPtr<cef_filter::RenderProcessHandler> render_process_handler(
+      new cef_filter::RenderProcessHandler);
+  CefRefPtr<cef_filter::App> app(
+      new cef_filter::App(std::move(render_process_handler)));
   return CefExecuteProcess(main_args, app.get(), nullptr);
 }

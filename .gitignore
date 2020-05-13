@@ -3,3 +3,4 @@ deps/ffmpeg*
 *.dylib
 .vscode
 .DS_Store
+ffmpeg*

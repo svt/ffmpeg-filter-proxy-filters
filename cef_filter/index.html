@@ -19,25 +19,18 @@
     <script>
       var circleNode = document.getElementById("circle-node");
 
-      var startTime = 0;
-      var totalTime = 4000;
-      var progress = 0;
-      function animateCircle(ts) {
-        if (progress >= 1) {
-          return;
-        }
-
-        if (!startTime) {
-          console.log("no start time");
-          startTime = ts;
-        }
-
-        console.log("ts:", ts);
-
-        progress = (ts - startTime) / totalTime;
-        console.log("progress:", progress);
+      let startTime = 0;
+      const totalTime = 2000;
+      const animateStep = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const progress = (timestamp - startTime) / totalTime;
         circleNode.setAttributeNS(null, "cx", 50 + 200 * progress);
-      }
+        if (progress < 1) {
+          window.requestAnimationFrame(animateStep);
+        }
+      };
+
+      window.requestAnimationFrame(animateStep);
     </script>
   </body>
 </html>

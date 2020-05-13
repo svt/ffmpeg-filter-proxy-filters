@@ -199,10 +199,10 @@ add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CAIRO REQUIRED cairo)
 
-set(CEF_FILTER_HELPER_SRCS loader.h app.h cef_filter_helper.cc)
+set(CEF_FILTER_HELPER_SRCS loader.h messages.h render_process_handler.h app.h cef_filter_helper.cc)
 set(CEF_FILTER_HELPER_TARGET "cef_filter_helper")
 
-set(CEF_FILTER_SRCS loader.h app.h cef_filter.cc)
+set(CEF_FILTER_SRCS loader.h messages.h app.h client.h context.h cef_filter.cc)
 set(CEF_FILTER_TARGET "cef_filter")
 
 SET_CEF_TARGET_OUT_DIR()

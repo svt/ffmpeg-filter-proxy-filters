@@ -12,7 +12,8 @@
 namespace cef_filter {
 class App : public CefApp {
  public:
-  App() {}
+  explicit App(CefRefPtr<CefRenderProcessHandler>&& render_process_handler)
+      : render_process_handler_(std::move(render_process_handler)) {}
 
   void OnBeforeCommandLineProcessing(
       const CefString& process_type,
@@ -27,7 +28,13 @@ class App : public CefApp {
     }
   }
 
+  CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
+    return render_process_handler_;
+  }
+
  private:
+  CefRefPtr<CefRenderProcessHandler> render_process_handler_;
+
   IMPLEMENT_REFCOUNTING(App);
   DISALLOW_COPY_AND_ASSIGN(App);
 };

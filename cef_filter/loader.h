@@ -56,11 +56,9 @@ class Loader {
 
   const std::string& cef_root() const noexcept { return cef_root_; }
 
-  const std::string& cef_framework_dir() const noexcept {
 #ifdef OS_MACOSX
+  const std::string& cef_framework_dir() const noexcept {
     return cef_framework_dir_;
-#else
-    return "";
 #endif
   }
 
@@ -73,7 +71,7 @@ class Loader {
 #endif
 
   DISALLOW_COPY_AND_ASSIGN(Loader);
-};
+};  // namespace cef_filter
 }  // namespace cef_filter
 
 #endif  // CEF_FILTER_LOADER_H_

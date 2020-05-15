@@ -12,16 +12,18 @@
 #include <string>
 
 #include "client.h"
+#include "pixel_format.h"
 #include "task.h"
 
 namespace cef_filter {
 class Context {
  public:
   Context(const std::string& url,
+          PixelFormat pixel_format,
           std::future<void>&& cef_message_loop_future) noexcept
       : url_(url),
         cef_message_loop_future_(std::move(cef_message_loop_future)),
-        client_(new Client) {}
+        client_(new Client(pixel_format)) {}
 
   bool IsBrowserCreated() const noexcept { return client_->browser().get(); }
 

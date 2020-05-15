@@ -7,14 +7,15 @@
 #ifndef CEF_FILTER_CLIENT_H_
 #define CEF_FILTER_CLIENT_H_
 
-#include <cairo.h>
 #include <include/cef_app.h>
 #include <include/cef_client.h>
 
 #include <future>
 #include <string>
 
+#include "image.h"
 #include "messages.h"
+#include "pixel_format.h"
 #include "task.h"
 
 namespace cef_filter {
@@ -23,7 +24,7 @@ class Client : public CefClient,
                public CefLoadHandler,
                public CefRenderHandler {
  public:
-  Client() {}
+  explicit Client(PixelFormat pixel_format) : pixel_format_(pixel_format) {}
 
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() noexcept override {
     return this;
@@ -73,21 +74,8 @@ class Client : public CefClient,
     }
 
     paint_state_.waiting = false;
-
-    // TODO(chrsan): Do this without cairo!
-    cairo_surface_t* dst_surface = cairo_image_surface_create_for_data(
-        paint_state_.buffer, CAIRO_FORMAT_ARGB32, width, height, width * 4);
-    cairo_surface_t* src_surface = cairo_image_surface_create_for_data(
-        (unsigned char*)buffer, CAIRO_FORMAT_ARGB32, width, height, width * 4);
-
-    cairo_t* cr = cairo_create(dst_surface);
-    cairo_set_source_surface(cr, src_surface, 0, 0);
-    cairo_paint(cr);
-
-    cairo_destroy(cr);
-    cairo_surface_destroy(src_surface);
-    cairo_surface_destroy(dst_surface);
-
+    Draw(width, height, static_cast<std::uint8_t*>(paint_state_.buffer),
+         pixel_format_, static_cast<const std::uint8_t*>(buffer));
     paint_state_.promise.set_value();
   }
 
@@ -109,10 +97,8 @@ class Client : public CefClient,
     height_ = height;
   }
 
-  std::future<bool> SendTickMessage(
-      double ts_millis,
-      std::promise<bool>&& tick_response) noexcept {
-    tick_response_promise_ = std::move(tick_response);
+  std::future<bool> SendTickMessage(double ts_millis) noexcept {
+    tick_response_promise_ = std::promise<bool>();
 
     CefRefPtr<CefProcessMessage> tick_request =
         CefProcessMessage::Create(cef_filter::kTickRequest);
@@ -124,11 +110,10 @@ class Client : public CefClient,
     return tick_response_promise_.get_future();
   }
 
-  std::future<void> SetPaintState(unsigned char* buffer,
-                                  std::promise<void>&& promise) noexcept {
+  std::future<void> SetPaintState(unsigned char* buffer) noexcept {
     paint_state_.waiting = true;
     paint_state_.buffer = buffer;
-    paint_state_.promise = std::move(promise);
+    paint_state_.promise = std::promise<void>();
 
     browser_->GetHost()->Invalidate(PaintElementType::PET_VIEW);
 
@@ -155,6 +140,8 @@ class Client : public CefClient,
   CefRefPtr<CefBrowser>& browser() noexcept { return browser_; }
 
  private:
+  PixelFormat pixel_format_;
+
   std::promise<bool> loaded_promise_;
   std::promise<bool> tick_response_promise_;
 

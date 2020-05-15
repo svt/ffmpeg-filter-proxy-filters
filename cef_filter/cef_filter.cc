@@ -15,6 +15,7 @@
 #include "context.h"
 #include "loader.h"
 #include "messages.h"
+#include "pixel_format.h"
 #include "task.h"
 
 namespace {
@@ -36,9 +37,16 @@ bool ParseConfig(const char* config,
 
 extern "C" {
 __attribute__((visibility("default"))) int filter_init(const char* config,
+                                                       int pixel_format,
                                                        void** user_data) {
   if (!config) {
     std::cerr << "got null config" << std::endl;
+    return 1;
+  }
+
+  if (pixel_format < cef_filter::PixelFormat::kRGBA ||
+      pixel_format > cef_filter::PixelFormat::kBGRA) {
+    std::cerr << "invalid pixel format: " << pixel_format << std::endl;
     return 1;
   }
 
@@ -47,11 +55,6 @@ __attribute__((visibility("default"))) int filter_init(const char* config,
   if (!ParseConfig(config, url, subprocess_path)) {
     std::cerr << "error parsing: " << config << std::endl;
     return 1;
-  }
-
-  if (url.rfind("http://", 0) != 0 && url.rfind("https://", 0) != 0 &&
-      url.rfind("file://", 0) != 0) {
-    url = std::string("file://") + url;
   }
 
   const char* cef_root = std::getenv("CEF_ROOT");
@@ -77,7 +80,6 @@ __attribute__((visibility("default"))) int filter_init(const char* config,
     settings.no_sandbox = true;
     settings.windowless_rendering_enabled = true;
     settings.background_color = 0x00000000;
-
     settings.log_severity = cef_log_severity_t::LOGSEVERITY_INFO;
 
 #ifdef OS_MACOSX
@@ -95,7 +97,9 @@ __attribute__((visibility("default"))) int filter_init(const char* config,
   });
 
   promise.get_future().wait();
-  *user_data = new cef_filter::Context(url, std::move(future));
+  *user_data = new cef_filter::Context(
+      url, static_cast<cef_filter::PixelFormat>(pixel_format),
+      std::move(future));
 
   return 0;
 }
@@ -135,14 +139,14 @@ __attribute__((visibility("default"))) int filter_frame(unsigned char* data,
     ctx->client()->UpdateWidthAndHeight(width, height);
   }
 
-  std::future<bool> tick_response =
-      ctx->client()->SendTickMessage(ts_millis, std::promise<bool>());
+  std::future<bool> tick_response = ctx->client()->SendTickMessage(ts_millis);
   bool animation_frames_requested = tick_response.get();
   if (!animation_frames_requested) {
     return 0;
   }
 
-  ctx->client()->SetPaintState(data, std::promise<void>()).wait();
+  ctx->client()->SetPaintState(data).wait();
+
   return 0;
 }
 

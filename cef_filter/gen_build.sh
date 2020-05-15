@@ -10,3 +10,7 @@ BASE_DIR=`cd $(dirname ${BASH_SOURCE[0]}) && pwd`
 mkdir -p ${BASE_DIR}/build
 pushd ${BASE_DIR}/build
 cmake -G "Ninja" -DPROJECT_ARCH="x86_64" -DCMAKE_BUILD_TYPE=Release -DUSE_SANDBOX=OFF ..
+
+if [[ `uname | tr '[:upper:]' '[:lower:']` == "darwin" ]]; then
+  ln -s ${CEF_ROOT}/Release/Chromium\ Embedded\ Framework.framework/Libraries/libswiftshader* ${BASE_DIR}/build/Release
+fi

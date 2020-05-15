@@ -196,13 +196,10 @@ find_package(CEF REQUIRED)
 add_subdirectory(${CEF_LIBCEF_DLL_WRAPPER_PATH} libcef_dll_wrapper)
 
 # Include application targets.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(CAIRO REQUIRED cairo)
-
 set(CEF_FILTER_HELPER_SRCS loader.h messages.h render_process_handler.h app.h cef_filter_helper.cc)
 set(CEF_FILTER_HELPER_TARGET "cef_filter_helper")
 
-set(CEF_FILTER_SRCS loader.h messages.h app.h client.h context.h cef_filter.cc)
+set(CEF_FILTER_SRCS loader.h messages.h pixel_format.h image.h app.h client.h context.h cef_filter.cc)
 set(CEF_FILTER_TARGET "cef_filter")
 
 SET_CEF_TARGET_OUT_DIR()
@@ -216,10 +213,6 @@ add_library(${CEF_FILTER_TARGET} SHARED ${CEF_FILTER_SRCS})
 SET_LIBRARY_TARGET_PROPERTIES(${CEF_FILTER_TARGET})
 add_dependencies(${CEF_FILTER_TARGET} libcef_dll_wrapper)
 target_link_libraries(${CEF_FILTER_TARGET} libcef_dll_wrapper ${CEF_STANDARD_LIBS})
-target_link_directories(${CEF_FILTER_TARGET} PUBLIC ${CAIRO_LIBRARY_DIRS})
-target_link_libraries(${CEF_FILTER_TARGET} ${CAIRO_LIBRARIES} ${CAIRO_LDFLAGS} ${CAIRO_LDFLAGS_OTHER})
-target_include_directories(${CEF_FILTER_TARGET} PUBLIC ${CAIRO_INCLUDE_DIRS})
-target_compile_options(${CEF_FILTER_TARGET} PUBLIC ${CAIRO_CFLAGS} ${CAIRO_CFLAGS_OTHER}) 
 
 # Display configuration settings.
 PRINT_CEF_CONFIG()

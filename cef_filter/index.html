@@ -24,7 +24,7 @@
       const animateStep = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const progress = (timestamp - startTime) / totalTime;
-        circleNode.setAttributeNS(null, "cx", 50 + 200 * progress);
+        circleNode.setAttributeNS(null, "cx", 50 + 300 * progress);
         if (progress < 1) {
           window.requestAnimationFrame(animateStep);
         }

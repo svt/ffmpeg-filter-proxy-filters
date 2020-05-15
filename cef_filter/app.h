@@ -22,6 +22,10 @@ class App : public CefApp {
       command_line->AppendSwitch("disable-gpu-program-cache");
       command_line->AppendSwitch("disable-gpu-shader-disk-cache");
 
+      command_line->AppendSwitch("disable-gpu");
+      command_line->AppendSwitch("disable-gpu-compositing");
+      command_line->AppendSwitchWithValue("disable-gpu-vsync", "gpu");
+
 #ifdef OS_MACOSX
       command_line->AppendSwitch("use-mock-keychain");
 #endif

@@ -79,7 +79,6 @@ pub extern "C" fn filter_frame(
     data_size: c_uint,
     width: c_int,
     height: c_int,
-    line_size: c_int,
     ts_millis: c_double,
     user_data: *mut c_void,
 ) -> c_int {
@@ -99,7 +98,7 @@ pub extern "C" fn filter_frame(
         return 0;
     }
 
-    let cr = match new_cairo_context(data, data_size as usize, width, height, line_size) {
+    let cr = match new_cairo_context(data, data_size as usize, width, height) {
         Ok(cr) => cr,
         Err(status) => {
             eprintln!("could not create cairo context: {:?}", status);
@@ -162,17 +161,11 @@ fn new_cairo_context(
     data_size: usize,
     width: i32,
     height: i32,
-    line_size: i32,
 ) -> Result<cairo::Context, cairo::Status> {
     let data = unsafe { std::slice::from_raw_parts_mut(data, data_size) };
-    let surface = cairo::ImageSurface::create_for_data(
-        data,
-        cairo::Format::ARgb32,
-        width,
-        height,
-        line_size,
-    )?;
-
+    let format = cairo::Format::ARgb32;
+    let stride = format.stride_for_width(width as _).unwrap();
+    let surface = cairo::ImageSurface::create_for_data(data, format, width, height, stride)?;
     let cr = cairo::Context::new(&surface);
     cr.set_antialias(cairo::Antialias::Best);
     Ok(cr)

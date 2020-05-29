@@ -21,7 +21,6 @@ struct FilterApi {
         data_size: c_uint,
         width: c_int,
         height: c_int,
-        line_size: c_int,
         ts_millis: c_double,
         user_data: *mut c_void,
     ) -> c_int,
@@ -96,16 +95,13 @@ fn main() {
         std::process::exit(rv);
     }
 
-    let line_size: c_int = width * 4;
-
-    let mut frame_data: Vec<u8> = vec![0x55; (height * line_size) as _];
+    let mut frame_data: Vec<u8> = vec![0x55; (width * height * 4) as _];
     let rv = unsafe {
         container.filter_frame(
             frame_data.as_mut_ptr(),
             frame_data.len() as _,
             width,
             height,
-            line_size,
             ts,
             user_data,
         )

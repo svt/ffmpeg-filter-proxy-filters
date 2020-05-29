@@ -112,7 +112,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
         return 1;
     }
 
-    let on_frame_method = resolve_method(vm.env, class, "onFrame", "([BIIID)[B");
+    let on_frame_method = resolve_method(vm.env, class, "onFrame", "([BIID)[B");
     if vm.exception_thrown() || init_method.is_null() {
         eprintln!("could not resolve onFrame method");
         return 1;
@@ -152,7 +152,6 @@ pub extern "C" fn filter_frame(
     data_size: c_uint,
     width: c_int,
     height: c_int,
-    line_size: c_int,
     ts_millis: c_double,
     user_data: *mut c_void,
 ) -> c_int {
@@ -196,7 +195,6 @@ pub extern "C" fn filter_frame(
             in_arr,
             width,
             height,
-            line_size,
             ts_millis,
         )
     };

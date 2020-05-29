@@ -19,7 +19,7 @@ class JavaFilterSample {
         System.out.println("init");
     }
 
-    public static byte[] onFrame(byte[] pixels, int width, int height, int lineSize, double ts) {
+    public static byte[] onFrame(byte[] pixels, int width, int height, double ts) {
         System.out.println("onFrame");
         if (onFrameCounter != 0) {
             // We only care about the first frame in this sample ;)

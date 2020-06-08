@@ -130,8 +130,6 @@ pub extern "C" fn filter_uninit(user_data: *mut c_void) {
     }
 }
 
-// type BoxResult<T> = Result<T, Box<dyn std::error::Error>>;
-
 fn parse_config<'a>(config: *const c_char) -> anyhow::Result<Config<'a>> {
     let cstr = unsafe { CStr::from_ptr(config) };
     let s = cstr.to_str()?;

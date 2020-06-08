@@ -8,20 +8,14 @@ use std::ptr;
 
 use flate2::read::GzDecoder;
 use libc::{c_char, c_double, c_int, c_uchar, c_uint, c_void};
-use regex::Regex;
 use resvg::{cairo, usvg};
-use simple_error::SimpleError;
-
-use lazy_static::lazy_static;
 
 mod parse;
 
 mod transition;
 use transition::Tree;
 
-pub(crate) type BoxResult<T> = Result<T, Box<dyn std::error::Error>>;
-
-lazy_static! {
+lazy_static::lazy_static! {
     pub(crate) static ref RESVG_OPTIONS: resvg::Options = resvg::Options {
         usvg: usvg::Options {
             shape_rendering: usvg::ShapeRendering::GeometricPrecision,
@@ -124,10 +118,10 @@ pub extern "C" fn filter_uninit(user_data: *mut c_void) {
     }
 }
 
-fn parse_config<'a>(config: *const c_char) -> BoxResult<Config<'a>> {
+fn parse_config<'a>(config: *const c_char) -> anyhow::Result<Config<'a>> {
     let cstr = unsafe { CStr::from_ptr(config) };
     let s = cstr.to_str()?;
-    let re = Regex::new(r"^(?:compression=(none|gzip),)?tsvg=(.+)$").unwrap();
+    let re = regex::Regex::new(r"^(?:compression=(none|gzip),)?tsvg=(.+)$").unwrap();
     if let Some(cap) = re.captures(s) {
         let compression = if let Some(c) = cap.get(1) {
             if c.as_str() == "none" {
@@ -144,11 +138,11 @@ fn parse_config<'a>(config: *const c_char) -> BoxResult<Config<'a>> {
             tsvg: cap.get(2).unwrap().as_str(),
         })
     } else {
-        Err(SimpleError::new(s).into())
+        Err(anyhow::anyhow!(s))
     }
 }
 
-fn parse_tsvg(config: &Config) -> BoxResult<Tree> {
+fn parse_tsvg(config: &Config) -> anyhow::Result<Tree> {
     let f = File::open(config.tsvg)?;
     if let Compression::Gzip = config.compression {
         parse::parse_tsvg(GzDecoder::new(f))
@@ -159,19 +153,22 @@ fn parse_tsvg(config: &Config) -> BoxResult<Tree> {
 
 fn new_cairo_context(
     data: *mut c_uchar,
-    data_size: usize,
+    _data_size: usize,
     width: i32,
     height: i32,
     line_size: i32,
 ) -> Result<cairo::Context, cairo::Status> {
-    let data = unsafe { std::slice::from_raw_parts_mut(data, data_size) };
-    let surface = cairo::ImageSurface::create_for_data(
-        data,
-        cairo::Format::ARgb32,
-        width,
-        height,
-        line_size,
-    )?;
+    let surface = unsafe {
+        let surface = cairo_sys::cairo_image_surface_create_for_data(
+            data,
+            cairo_sys::FORMAT_A_RGB32,
+            width,
+            height,
+            line_size,
+        );
+
+        cairo::ImageSurface::from_raw_full(surface)?
+    };
 
     let cr = cairo::Context::new(&surface);
     cr.set_antialias(cairo::Antialias::Best);

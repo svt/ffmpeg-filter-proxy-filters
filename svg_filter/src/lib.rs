@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-extern crate regex;
-
 use std::error::Error;
 use std::ffi::{c_void, CStr};
 use std::os::raw::{c_char, c_double, c_int, c_uchar, c_uint};
@@ -9,7 +5,7 @@ use std::ptr;
 
 use resvg::{cairo, usvg};
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub(crate) static ref RESVG_OPTIONS: resvg::Options = resvg::Options {
         usvg: usvg::Options {
             shape_rendering: usvg::ShapeRendering::GeometricPrecision,
@@ -35,7 +31,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
     let svg_path = match parse_config(config) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("Error parsing config: {}", e);
+            eprintln!("error parsing config: {}", e);
             return 1;
         }
     };
@@ -43,7 +39,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
     let tree = match usvg::Tree::from_file(svg_path, &RESVG_OPTIONS.usvg) {
         Ok(t) => t,
         Err(e) => {
-            eprintln!("Error reading svg: {}", e);
+            eprintln!("error reading svg: {}", e);
             return 1;
         }
     };
@@ -67,7 +63,7 @@ pub extern "C" fn filter_frame(
     let cr = match new_cairo_context(data, data_size as usize, width, height, line_size) {
         Ok(cr) => cr,
         Err(status) => {
-            eprintln!("Could not create cairo context: {}", status);
+            eprintln!("could not create cairo context: {}", status);
             return 1;
         }
     };
@@ -97,26 +93,29 @@ pub extern "C" fn filter_uninit(user_data: *mut c_void) {
 fn parse_config(config: *const c_char) -> Result<String, Box<dyn Error>> {
     let regex = regex::Regex::new(r"^svg=(.*)$")?;
     let opt = unsafe { CStr::from_ptr(config) }.to_str()?;
-    let captures = regex.captures(opt).ok_or("Invalid option! use: svg=path")?;
+    let captures = regex.captures(opt).ok_or("invalid option, use: svg=path")?;
     let path = captures.get(1).unwrap().as_str();
     Ok(String::from(path))
 }
 
 fn new_cairo_context(
     data: *mut c_uchar,
-    data_size: usize,
+    _data_size: usize,
     width: i32,
     height: i32,
     line_size: i32,
 ) -> Result<cairo::Context, cairo::Status> {
-    let data = unsafe { std::slice::from_raw_parts_mut(data, data_size) };
-    let surface = cairo::ImageSurface::create_for_data(
-        data,
-        cairo::Format::ARgb32,
-        width,
-        height,
-        line_size,
-    )?;
+    let surface = unsafe {
+        let surface = cairo_sys::cairo_image_surface_create_for_data(
+            data,
+            cairo_sys::FORMAT_A_RGB32,
+            width,
+            height,
+            line_size,
+        );
+
+        cairo::ImageSurface::from_raw_full(surface)?
+    };
 
     let cr = cairo::Context::new(&surface);
     cr.set_antialias(cairo::Antialias::Best);

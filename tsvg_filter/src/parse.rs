@@ -2,15 +2,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{error, fmt, io, string::String};
+use std::{io, string::String};
 
 use resvg::usvg;
 use roxmltree::{Document, Node, NodeType};
 
-use super::BoxResult;
 use crate::transition::{Transition, Tree};
 
-pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Tree> {
+pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> anyhow::Result<Tree> {
     let mut s = String::new();
     source.read_to_string(&mut s)?;
 
@@ -18,7 +17,7 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Tree> {
     let root = doc.root_element();
     let root_name = root.tag_name().name();
     if root_name != "transitions" {
-        return parse_error(format!("unexpected root element {}", root_name));
+        return Err(anyhow::anyhow!("unexpected root element {}", root_name));
     }
 
     let mut transitions = Vec::new();
@@ -31,20 +30,20 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Tree> {
                     continue;
                 }
 
-                return parse_error("unexpected text node");
+                return Err(anyhow::anyhow!("unexpected text node"));
             }
 
             NodeType::Element => {
                 let name = c.tag_name().name();
                 if name != "transition" {
-                    return parse_error(format!("unexpected element {}", name));
+                    return Err(anyhow::anyhow!("unexpected element {}", name));
                 }
 
                 transitions.push(parse_transition(i, &c)?);
             }
 
             _ => {
-                return parse_error(format!("unexpected node type {:?}", node_type));
+                return Err(anyhow::anyhow!("unexpected node type {:?}", node_type));
             }
         }
     }
@@ -52,14 +51,12 @@ pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> BoxResult<Tree> {
     Ok(Tree::new(transitions))
 }
 
-fn parse_transition(idx: usize, node: &Node) -> BoxResult<Transition> {
+fn parse_transition(idx: usize, node: &Node) -> anyhow::Result<Transition> {
     let time_in = node
         .attribute("time-in")
         .map(|v| v.parse::<u64>())
         .transpose()?
-        .ok_or(Box::new(ParseError(String::from(
-            "no time-in attribute in transition",
-        ))))?;
+        .ok_or(anyhow::anyhow!("no time-in attribute in transition"))?;
 
     let time_out = node
         .attribute("time-out")
@@ -81,47 +78,30 @@ fn parse_transition(idx: usize, node: &Node) -> BoxResult<Transition> {
     })
 }
 
-fn parse_svg(transition_node: &Node) -> BoxResult<usvg::Tree> {
+fn parse_svg(transition_node: &Node) -> anyhow::Result<usvg::Tree> {
     match transition_node.first_child() {
-        None => {
-            return parse_error("missing SVG data in transition");
-        }
+        None => return Err(anyhow::anyhow!("missing SVG data in transition")),
 
         Some(c) => {
             let node_type = c.node_type();
             if node_type != NodeType::Text {
-                return parse_error(format!(
+                return Err(anyhow::anyhow!(
                     "unexpected {:?} child node in transition",
                     node_type
                 ));
             }
 
             if c.has_siblings() {
-                return parse_error("unexpeted multiple children in transition");
+                return Err(anyhow::anyhow!("unexpeted multiple children in transition"));
             }
 
             let text = c.text().unwrap().trim();
             if text.is_empty() {
-                return parse_error("empty SVG data in transition");
+                Err(anyhow::anyhow!("empty SVG data in transition"))
+            } else {
+                let tree = usvg::Tree::from_str(text, &super::RESVG_OPTIONS.usvg)?;
+                Ok(tree)
             }
-
-            let tree = usvg::Tree::from_str(text, &super::RESVG_OPTIONS.usvg)?;
-            Ok(tree)
         }
     }
 }
-
-fn parse_error<T: Into<String>, U>(msg: T) -> BoxResult<U> {
-    Err(Box::new(ParseError(msg.into())))
-}
-
-#[derive(Debug)]
-struct ParseError(String);
-
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl error::Error for ParseError {}

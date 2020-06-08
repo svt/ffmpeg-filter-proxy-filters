@@ -6,11 +6,7 @@ use std::ffi::CStr;
 use std::fs::File;
 use std::ptr;
 
-use cairo;
 use libc::{c_char, c_double, c_int, c_uchar, c_uint, c_void};
-use protobuf;
-use regex::Regex;
-use simple_error::SimpleError;
 
 mod subtitle_rendering_data;
 use subtitle_rendering_data::{Point, RenderingData, SegmentType, Transition};
@@ -134,12 +130,12 @@ pub extern "C" fn filter_uninit(user_data: *mut c_void) {
     }
 }
 
-type BoxResult<T> = Result<T, Box<dyn std::error::Error>>;
+// type BoxResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-fn parse_config<'a>(config: *const c_char) -> BoxResult<Config<'a>> {
+fn parse_config<'a>(config: *const c_char) -> anyhow::Result<Config<'a>> {
     let cstr = unsafe { CStr::from_ptr(config) };
     let s = cstr.to_str()?;
-    let re = Regex::new(r"^(?:scale_type=(none|uniform|non_uniform),)?srf=(.+)$").unwrap();
+    let re = regex::Regex::new(r"^(?:scale_type=(none|uniform|non_uniform),)?srf=(.+)$").unwrap();
     if let Some(cap) = re.captures(s) {
         let scale_type = if let Some(st) = cap.get(1) {
             match st.as_str() {
@@ -156,11 +152,11 @@ fn parse_config<'a>(config: *const c_char) -> BoxResult<Config<'a>> {
             srf: cap.get(2).unwrap().as_str(),
         })
     } else {
-        Err(SimpleError::new(s).into())
+        Err(anyhow::anyhow!(s))
     }
 }
 
-fn read_srf(srf: &str) -> BoxResult<RenderingData> {
+fn read_srf(srf: &str) -> anyhow::Result<RenderingData> {
     let mut f = File::open(srf)?;
     let rendering_data = protobuf::parse_from_reader(&mut f)?;
     Ok(rendering_data)
@@ -184,19 +180,22 @@ fn find_transition(transitions: &[Transition], ts: f64) -> Option<usize> {
 
 fn new_cairo_context(
     data: *mut c_uchar,
-    data_size: usize,
+    _data_size: usize,
     width: i32,
     height: i32,
     line_size: i32,
 ) -> Result<cairo::Context, cairo::Status> {
-    let data = unsafe { std::slice::from_raw_parts_mut(data, data_size) };
-    let surface = cairo::ImageSurface::create_for_data(
-        data,
-        cairo::Format::ARgb32,
-        width,
-        height,
-        line_size,
-    )?;
+    let surface = unsafe {
+        let surface = cairo_sys::cairo_image_surface_create_for_data(
+            data,
+            cairo_sys::FORMAT_A_RGB32,
+            width,
+            height,
+            line_size,
+        );
+
+        cairo::ImageSurface::from_raw_full(surface)?
+    };
 
     let cr = cairo::Context::new(&surface);
     cr.set_antialias(cairo::Antialias::Best);

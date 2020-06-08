@@ -8,10 +8,11 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = "1.0"
+cairo-sys-rs = "0.9.1"
 libc = "0.2"
 protobuf = "2.12.0"
 regex = "1"
-simple-error = "0.2"
 
 [dependencies.cairo-rs]
 version = "0.8.1"

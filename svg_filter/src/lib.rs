@@ -118,6 +118,6 @@ fn new_cairo_context(
     };
 
     let cr = cairo::Context::new(&surface);
-    cr.set_antialias(cairo::Antialias::Best);
+    cr.set_antialias(cairo::Antialias::Gray);
     Ok(cr)
 }

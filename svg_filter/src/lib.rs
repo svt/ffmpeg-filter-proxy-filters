@@ -82,6 +82,11 @@ pub extern "C" fn filter_frame(
 }
 
 #[no_mangle]
+pub extern "C" fn filter_version(_ts_millis: c_double, _user_data: *mut c_void) -> u64 {
+    1
+}
+
+#[no_mangle]
 pub extern "C" fn filter_uninit(user_data: *mut c_void) {
     if !user_data.is_null() {
         unsafe {

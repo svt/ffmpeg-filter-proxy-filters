@@ -122,6 +122,19 @@ pub extern "C" fn filter_frame(
 }
 
 #[no_mangle]
+pub extern "C" fn filter_version(ts_millis: c_double, user_data: *mut c_void) -> u64 {
+    if user_data.is_null() {
+        return 0;
+    }
+    let ctx = unsafe { &*(user_data as *const Context) };
+    let transitions = ctx.rendering_data.get_transitions();
+    match find_transition(transitions, ts_millis) {
+        Some(idx) => (idx as u64) + 1,
+        None => 0,
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn filter_uninit(user_data: *mut c_void) {
     if !user_data.is_null() {
         unsafe {

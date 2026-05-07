@@ -7,6 +7,7 @@ use std::fs::File;
 use std::ptr;
 
 use libc::{c_char, c_double, c_int, c_uchar, c_uint, c_void};
+use protobuf::Message;
 
 mod subtitle_rendering_data;
 use subtitle_rendering_data::{Point, RenderingData, SegmentType, Transition};
@@ -169,7 +170,7 @@ fn parse_config<'a>(config: *const c_char) -> anyhow::Result<Config<'a>> {
 
 fn read_srf(srf: &str) -> anyhow::Result<RenderingData> {
     let mut f = File::open(srf)?;
-    let rendering_data = protobuf::parse_from_reader(&mut f)?;
+    let rendering_data = RenderingData::parse_from_reader(&mut f)?;
     Ok(rendering_data)
 }
 
@@ -195,7 +196,7 @@ fn new_cairo_context(
     width: i32,
     height: i32,
     line_size: i32,
-) -> Result<cairo::Context, cairo::Status> {
+) -> Result<cairo::Context, cairo::Error> {
     let surface = unsafe {
         let surface = cairo_sys::cairo_image_surface_create_for_data(
             data,
@@ -208,7 +209,7 @@ fn new_cairo_context(
         cairo::ImageSurface::from_raw_full(surface)?
     };
 
-    let cr = cairo::Context::new(&surface);
+    let cr = cairo::Context::new(&surface)?;
     cr.set_antialias(cairo::Antialias::Best);
     Ok(cr)
 }
@@ -268,13 +269,13 @@ impl<'a> RenderContext<'a> {
             0.
         };
 
-        let (tx, ty) = self.cr.device_to_user(tx, ty);
+        let (tx, ty) = self.cr.device_to_user(tx, ty).unwrap();
         self.cr.translate(tx, ty);
     }
 
     fn render_shapes(&self) {
         for shape in self.transition.get_shapes() {
-            self.cr.save();
+            let _ = self.cr.save();
             self.cr
                 .translate(unfix(shape.get_x()), unfix(shape.get_y()));
 
@@ -315,20 +316,20 @@ impl<'a> RenderContext<'a> {
 
             self.set_color(shape.get_argb());
             if shape.get_fill() {
-                self.cr.fill();
+                let _ = self.cr.fill();
             } else {
                 self.cr.set_line_cap(cairo::LineCap::Square);
                 self.cr.set_line_join(cairo::LineJoin::Round);
                 self.cr.set_line_width(shape.get_line_width() as f64 / 64.);
-                self.cr.stroke();
+                let _ = self.cr.stroke();
             }
 
-            self.cr.restore();
+            let _ = self.cr.restore();
         }
     }
 
     fn quad_to_curve(&self, c: &Point, p: &Point) {
-        let (x1, y1) = self.cr.get_current_point();
+        let (x1, y1) = self.cr.current_point().unwrap();
 
         let x2 = unfix(c.get_x());
         let y2 = unfix(c.get_y());

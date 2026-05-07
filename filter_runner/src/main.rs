@@ -8,10 +8,8 @@ use std::io::BufWriter;
 use std::ptr;
 
 use clap::{value_t_or_exit, App, Arg};
-use dlopen::wrapper::{Container, WrapperApi};
-use dlopen_derive::*;
+use dlopen2::wrapper::{Container, WrapperApi};
 use libc::{c_char, c_double, c_int, c_uchar, c_uint, c_void};
-use png;
 
 #[derive(WrapperApi)]
 struct FilterApi {
@@ -122,7 +120,7 @@ fn main() {
         let file = File::create(png_out).unwrap();
         let ref mut w = BufWriter::new(file);
         let mut encoder = png::Encoder::new(w, width as _, height as _);
-        encoder.set_color(png::ColorType::RGBA);
+        encoder.set_color(png::ColorType::Rgba);
         encoder.set_depth(png::BitDepth::Eight);
 
         let mut writer = encoder.write_header().unwrap();

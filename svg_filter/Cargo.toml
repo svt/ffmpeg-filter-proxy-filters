@@ -2,20 +2,18 @@
 name = "svg_filter"
 version = "0.1.0"
 authors = ["Finn Hermansson <finn.hermansson@svt.se>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-cairo-sys-rs = "0.9.1"
-regex = "1.3.3"
-lazy_static = "1.4.0"
-
-[dependencies.resvg]
-version = "0.9.0"
-default-features = false
-features = ["cairo-backend"]
+cairo-rs = { version = "0.8", default-features = false }
+cairo-sys-rs = "0.9"
+lazy_static = "1.4"
+regex = "1"
+resvg-cairo = "0.10.1"
+usvg = "0.10"
 
 [profile.release]
 panic = 'abort'

@@ -4,10 +4,10 @@
 
 use std::{io, string::String};
 
-use resvg::usvg;
 use roxmltree::{Document, Node, NodeType};
 
 use crate::transition::{Transition, Tree};
+
 
 pub(crate) fn parse_tsvg<R: io::Read>(mut source: R) -> anyhow::Result<Tree> {
     let mut s = String::new();
@@ -99,7 +99,7 @@ fn parse_svg(transition_node: &Node) -> anyhow::Result<usvg::Tree> {
             if text.is_empty() {
                 Err(anyhow::anyhow!("empty SVG data in transition"))
             } else {
-                let tree = usvg::Tree::from_str(text, &super::RESVG_OPTIONS.usvg)?;
+                let tree = usvg::Tree::from_str(text, &super::RENDER_OPTIONS.usvg)?;
                 Ok(tree)
             }
         }

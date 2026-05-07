@@ -7,16 +7,21 @@
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
+#![allow(renamed_and_removed_lints)]
 #![allow(box_pointers)]
 #![allow(dead_code)]
+#![allow(deprecated)]
 #![allow(missing_docs)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
+#![allow(static_mut_refs)]
 #![allow(trivial_casts)]
 #![allow(unsafe_code)]
 #![allow(unused_imports)]
+#![allow(unused_parens)]
 #![allow(unused_results)]
+#![allow(mismatched_lifetime_syntaxes)]
 //! Generated file from `subtitle_rendering_data.proto`
 
 use protobuf::Message as Message_imported_for_functions;

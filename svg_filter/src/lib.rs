@@ -123,6 +123,5 @@ fn new_cairo_context(
 
     let cr = cairo::Context::new(&surface);
     cr.set_antialias(cairo::Antialias::Gray);
-    cr.set_tolerance(0.01);
     Ok(cr)
 }

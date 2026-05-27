@@ -71,9 +71,9 @@ Copyright 2020 Sveriges Television AB
 
 This software is released under the Apache 2.0 License.
 
-## Primary Maintainers
+## Credits
 
-Christer Sandberg <https://github.com/chrsan>
+Originally created by Christer Sandberg <https://github.com/chrsan>.
 
 [1]: https://github.com/SVT/ffmpeg-filter-proxy
 [2]: https://www.rust-lang.org

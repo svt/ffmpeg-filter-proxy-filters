@@ -2,24 +2,22 @@
 name = "tsvg_filter"
 version = "0.1.0"
 authors = ["Christer Sandberg <christer.sandberg@svt.se>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0"
-cairo-sys-rs = "0.9.1"
+cairo-rs = { version = "0.8", default-features = false }
+cairo-sys-rs = "0.9"
 flate2 = "1.0"
-lazy_static = "1.4.0"
+lazy_static = "1.4"
 libc = "0.2"
 regex = "1"
-roxmltree = "0.9.0"
-
-[dependencies.resvg]
-version = "0.9.0"
-default-features = false
-features = ["cairo-backend"]
+resvg-cairo = "0.10.1"
+roxmltree = "0.9"
+usvg = "0.10"
 
 [profile.release]
 panic = 'abort'

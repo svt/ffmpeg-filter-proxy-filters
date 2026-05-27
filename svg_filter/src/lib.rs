@@ -3,17 +3,16 @@ use std::ffi::{c_void, CStr};
 use std::os::raw::{c_char, c_double, c_int, c_uchar, c_uint};
 use std::ptr;
 
-use resvg::{cairo, usvg};
-
 lazy_static::lazy_static! {
-    pub(crate) static ref RESVG_OPTIONS: resvg::Options = resvg::Options {
+    pub(crate) static ref RENDER_OPTIONS: resvg_cairo::Options = resvg_cairo::Options {
         usvg: usvg::Options {
             shape_rendering: usvg::ShapeRendering::GeometricPrecision,
             image_rendering: usvg::ImageRendering::OptimizeQuality,
             text_rendering: usvg::TextRendering::GeometricPrecision,
             ..usvg::Options::default()
         },
-        ..resvg::Options::default()
+        fit_to: usvg::FitTo::Original,
+        background: None,
     };
 }
 
@@ -36,7 +35,7 @@ pub extern "C" fn filter_init(config: *const c_char, user_data: *mut *mut c_void
         }
     };
 
-    let tree = match usvg::Tree::from_file(svg_path, &RESVG_OPTIONS.usvg) {
+    let tree = match usvg::Tree::from_file(svg_path, &RENDER_OPTIONS.usvg) {
         Ok(t) => t,
         Err(e) => {
             eprintln!("error reading svg: {}", e);
@@ -75,10 +74,15 @@ pub extern "C" fn filter_frame(
         unsafe { &*(user_data as *const usvg::Tree) }
     };
 
-    let size = resvg::ScreenSize::new(width as u32, height as u32).unwrap();
-    resvg::backend_cairo::render_to_canvas(&tree, &RESVG_OPTIONS, size, &cr);
+    let size = usvg::ScreenSize::new(width as u32, height as u32).unwrap();
+    resvg_cairo::render_to_canvas(tree, &RENDER_OPTIONS, size, &cr);
 
     0
+}
+
+#[no_mangle]
+pub extern "C" fn filter_version(_ts_millis: c_double, _user_data: *mut c_void) -> u64 {
+    1
 }
 
 #[no_mangle]

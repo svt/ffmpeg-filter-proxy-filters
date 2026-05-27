@@ -5,8 +5,6 @@
 use std::cmp::Ordering;
 use std::collections::VecDeque;
 
-use resvg::usvg;
-
 pub(crate) struct Transition {
     pub(crate) time_in: u64,
     pub(crate) time_out: Option<u64>,
@@ -135,13 +133,11 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let svg_tree = usvg::Tree::create(usvg::Svg {
-            size: usvg::Size::new(640.0, 360.0).unwrap(),
-            view_box: usvg::ViewBox {
-                rect: usvg::Rect::new(0.0, 0.0, 640.0, 360.0).unwrap(),
-                aspect: usvg::AspectRatio::default(),
-            },
-        });
+        let svg_tree = usvg::Tree::from_str(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"/>"#,
+            &usvg::Options::default(),
+        )
+        .unwrap();
 
         let transitions = vec![
             Transition {

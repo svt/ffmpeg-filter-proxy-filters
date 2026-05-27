@@ -8,7 +8,6 @@ use std::ptr;
 
 use flate2::read::GzDecoder;
 use libc::{c_char, c_double, c_int, c_uchar, c_uint, c_void};
-use resvg::{cairo, usvg};
 
 mod parse;
 
@@ -16,14 +15,15 @@ mod transition;
 use transition::Tree;
 
 lazy_static::lazy_static! {
-    pub(crate) static ref RESVG_OPTIONS: resvg::Options = resvg::Options {
+    pub(crate) static ref RENDER_OPTIONS: resvg_cairo::Options = resvg_cairo::Options {
         usvg: usvg::Options {
             shape_rendering: usvg::ShapeRendering::GeometricPrecision,
             image_rendering: usvg::ImageRendering::OptimizeQuality,
             text_rendering: usvg::TextRendering::GeometricPrecision,
             ..usvg::Options::default()
         },
-        ..resvg::Options::default()
+        fit_to: usvg::FitTo::Original,
+        background: None,
     };
 }
 
@@ -101,9 +101,9 @@ pub extern "C" fn filter_frame(
         }
     };
 
-    let size = resvg::ScreenSize::new(width as u32, height as u32).unwrap();
+    let size = usvg::ScreenSize::new(width as u32, height as u32).unwrap();
     for transition in transitions {
-        resvg::backend_cairo::render_to_canvas(&transition.tree, &RESVG_OPTIONS, size, &cr);
+        resvg_cairo::render_to_canvas(&transition.tree, &RENDER_OPTIONS, size, &cr);
     }
 
     0
@@ -138,7 +138,7 @@ fn parse_config<'a>(config: *const c_char) -> anyhow::Result<Config<'a>> {
             tsvg: cap.get(2).unwrap().as_str(),
         })
     } else {
-        Err(anyhow::anyhow!(s))
+        Err(anyhow::anyhow!(s.to_string()))
     }
 }
 
